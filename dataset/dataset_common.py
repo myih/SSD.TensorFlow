@@ -20,6 +20,53 @@ import tensorflow as tf
 
 slim = tf.contrib.slim
 
+GTSDB_LABELS = {
+    'none': (0, 'Background'),
+    '20': (1, 'prohibitory'),
+    '30': (2, 'prohibitory'),
+    '50': (3, 'prohibitory'),
+    '60': (4, 'prohibitory'),
+    '70': (5, 'prohibitory'),
+    '80': (6, 'prohibitory'),
+    'ends 80': (7, 'other'),
+    '100': (8, 'prohibitory'),
+    '120': (9, 'prohibitory'),
+    'no overtaking': (10, 'prohibitory'),
+    'no overtaking (trucks)': (11, 'prohibitory'),
+    'priority at next intersection': (12, 'danger'),
+    'priority road': (13, 'other'),
+    'give way': (14, 'other'),
+    'stop': (15, 'other'),
+    'no traffic both ways': (16, 'prohibitory'),
+    'no trucks': (17, 'prohibitory'),
+    'no entry': (18, 'other'),
+    'danger': (19, 'danger'),
+    'bend left': (20, 'danger'),
+    'bend right': (21, 'danger'),
+    'bend': (22, 'danger'),
+    'uneven road': (23, 'danger'),
+    'slippery road': (24, 'danger'),
+    'road narrows': (25, 'danger'),
+    'construction': (26, 'danger'),
+    'traffic signal': (27, 'danger'),
+    'pedestrian crossing': (28, 'danger'),
+    'school crossing': (29, 'danger'),
+    'cycles crossing': (30, 'danger'),
+    'snow': (31, 'danger'),
+    'animals': (32, 'danger'),
+    'restriction ends': (33, 'other'),
+    'go right': (34, 'mandatory'),
+    'go left': (35, 'mandatory'),
+    'go straight': (36, 'mandatory'),
+    'go right or straight': (37, 'mandatory'),
+    'go left or straight': (38, 'mandatory'),
+    'keep right': (39, 'mandatory'),
+    'keep left': (40, 'mandatory'),
+    'roundabout': (41, 'mandatory'),
+    'restriction ends (overtaking)': (42, 'other'),
+    'restriction ends (overtaking (trucks))': (43, 'other')
+}
+
 VOC_LABELS = {
     'none': (0, 'Background'),
     'aeroplane': (1, 'Vehicle'),
@@ -130,8 +177,8 @@ COCO_LABELS = {
 
 # use dataset_inspect.py to get these summary
 data_splits_num = {
-    'train': 22136,
-    'val': 4952,
+    'train': 588,
+    'val': 153,
 }
 
 def slim_get_batch(num_classes, batch_size, split_name, file_pattern, num_readers, num_preprocessing_threads, image_preprocessing_fn, anchor_encoder, num_epochs=None, is_training=True):
@@ -185,7 +232,7 @@ def slim_get_batch(num_classes, batch_size, split_name, file_pattern, num_reader
     decoder = slim.tfexample_decoder.TFExampleDecoder(keys_to_features, items_to_handlers)
 
     labels_to_names = {}
-    for name, pair in VOC_LABELS.items():
+    for name, pair in GTSDB_LABELS.items():
         labels_to_names[pair[0]] = name
 
     dataset = slim.dataset.Dataset(

@@ -37,9 +37,9 @@ from tensorflow.python.ops import control_flow_ops
 
 slim = tf.contrib.slim
 
-_R_MEAN = 123.68
-_G_MEAN = 116.78
-_B_MEAN = 103.94
+_R_MEAN = 125
+_G_MEAN = 127
+_B_MEAN = 130
 
 def _ImageDimensions(image, rank = 3):
   """Returns the dimensions of an image tensor.

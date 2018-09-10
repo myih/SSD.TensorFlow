@@ -26,7 +26,7 @@ import numpy as np
 from net import ssd_net
 
 from dataset import dataset_common
-from preprocessing import ssd_preprocessing
+from pre import ssd_preprocessing
 from utility import anchor_manipulator
 from utility import scaffolds
 
@@ -47,7 +47,7 @@ tf.app.flags.DEFINE_string(
     'data_dir', './dataset/tfrecords',
     'The directory where the dataset input data is stored.')
 tf.app.flags.DEFINE_integer(
-    'num_classes', 21, 'Number of classes to use in the dataset.')
+    'num_classes', 44, 'Number of classes to use in the dataset.')
 tf.app.flags.DEFINE_string(
     'model_dir', './logs/',
     'The directory where the model will be stored.')
@@ -86,9 +86,9 @@ tf.app.flags.DEFINE_float(
 tf.app.flags.DEFINE_float(
     'nms_threshold', 0.45, 'Matching threshold in NMS algorithm.')
 tf.app.flags.DEFINE_integer(
-    'nms_topk', 200, 'Number of total object to keep after NMS.')
+    'nms_topk', 100, 'Number of total object to keep after NMS.')
 tf.app.flags.DEFINE_integer(
-    'keep_topk', 400, 'Number of total object to keep for each image before nms.')
+    'keep_topk', 100, 'Number of total object to keep for each image before nms.')
 # optimizer related configuration
 tf.app.flags.DEFINE_float(
     'weight_decay', 5e-4, 'The weight decay on the model weights.')
@@ -123,12 +123,12 @@ global_anchor_info = dict()
 
 def input_pipeline(dataset_pattern='train-*', is_training=True, batch_size=FLAGS.batch_size):
     def input_fn():
-        out_shape = [FLAGS.train_image_size] * 2
+        out_shape = [300, 510]#[FLAGS.train_image_size] * 2
         anchor_creator = anchor_manipulator.AnchorCreator(out_shape,
-                                                    layers_shapes = [(38, 38), (19, 19), (10, 10), (5, 5), (3, 3), (1, 1)],
-                                                    anchor_scales = [(0.1,), (0.2,), (0.375,), (0.55,), (0.725,), (0.9,)],
-                                                    extra_anchor_scales = [(0.1414,), (0.2739,), (0.4541,), (0.6315,), (0.8078,), (0.9836,)],
-                                                    anchor_ratios = [(1., 2., .5), (1., 2., 3., .5, 0.3333), (1., 2., 3., .5, 0.3333), (1., 2., 3., .5, 0.3333), (1., 2., .5), (1., 2., .5)],
+                                                    layers_shapes = [(38, 64), (19, 32), (10, 16), (5, 8), (3, 6), (1, 4)],
+                                                    anchor_scales = [(0.05,), (0.1,), (0.2,), (0.3,), (0.4,), (0.5,)],
+                                                    extra_anchor_scales = [(0.07,), (0.1414,), (0.245,), (0.346,), (0.447,), (0.547,)],
+                                                    anchor_ratios = [(1.,), (1.,), (1.,), (1.,), (1.,), (1.,)],
                                                     #anchor_ratios = [(2., .5), (2., 3., .5, 0.3333), (2., 3., .5, 0.3333), (2., 3., .5, 0.3333), (2., .5), (2., .5)],
                                                     layer_steps = [8, 16, 32, 64, 100, 300])
         all_anchors, all_num_anchors_depth, all_num_anchors_spatial = anchor_creator.get_all_anchors()

@@ -24,9 +24,10 @@ import tensorflow as tf
 from net import ssd_net
 
 from dataset import dataset_common
-from preprocessing import ssd_preprocessing
 from utility import anchor_manipulator
 from utility import scaffolds
+
+#from pre import ssd_preproccessing
 
 # hardware related configuration
 tf.app.flags.DEFINE_integer(
@@ -45,7 +46,7 @@ tf.app.flags.DEFINE_string(
     'data_dir', './dataset/tfrecords',
     'The directory where the dataset input data is stored.')
 tf.app.flags.DEFINE_integer(
-    'num_classes', 21, 'Number of classes to use in the dataset.')
+    'num_classes', 44, 'Number of classes to use in the dataset.') #include background class
 tf.app.flags.DEFINE_string(
     'model_dir', './logs/',
     'The directory where the model will be stored.')
@@ -56,7 +57,7 @@ tf.app.flags.DEFINE_integer(
     'save_summary_steps', 500,
     'The frequency with which summaries are saved, in seconds.')
 tf.app.flags.DEFINE_integer(
-    'save_checkpoints_secs', 7200,
+    'save_checkpoints_secs', 600,
     'The frequency with which the model is saved, in seconds.')
 # model related configuration
 tf.app.flags.DEFINE_integer(
@@ -66,10 +67,10 @@ tf.app.flags.DEFINE_integer(
     'train_epochs', None,
     'The number of epochs to use for training.')
 tf.app.flags.DEFINE_integer(
-    'max_number_of_steps', 120000,
+    'max_number_of_steps', 30000,
     'The max number of steps to use for training.')
 tf.app.flags.DEFINE_integer(
-    'batch_size', 32,
+    'batch_size', 2,
     'Batch size for training and evaluation.')
 tf.app.flags.DEFINE_string(
     'data_format', 'channels_first', # 'channels_first' or 'channels_last'
@@ -91,20 +92,20 @@ tf.app.flags.DEFINE_float(
 tf.app.flags.DEFINE_float(
     'momentum', 0.9,
     'The momentum for the MomentumOptimizer and RMSPropOptimizer.')
-tf.app.flags.DEFINE_float('learning_rate', 1e-3, 'Initial learning rate.')
+tf.app.flags.DEFINE_float('learning_rate', 1e-4, 'Initial learning rate.')
 tf.app.flags.DEFINE_float(
     'end_learning_rate', 0.000001,
     'The minimal end learning rate used by a polynomial decay learning rate.')
 # for learning rate piecewise_constant decay
 tf.app.flags.DEFINE_string(
-    'decay_boundaries', '500, 80000, 100000',
+    'decay_boundaries', '6000, 18000',
     'Learning rate decay boundaries by global_step (comma-separated list).')
 tf.app.flags.DEFINE_string(
-    'lr_decay_factors', '0.1, 1, 0.1, 0.01',
+    'lr_decay_factors', '1, 0.1, 0.01',
     'The values of learning_rate decay factor for each segment between boundaries (comma-separated list).')
 # checkpoint related configuration
 tf.app.flags.DEFINE_string(
-    'checkpoint_path', './model',
+    'checkpoint_path', './model/vgg16.ckpt',
     'The path to a checkpoint from which to fine-tune.')
 tf.app.flags.DEFINE_string(
     'checkpoint_model_scope', 'vgg_16',
@@ -165,12 +166,12 @@ global_anchor_info = dict()
 
 def input_pipeline(dataset_pattern='train-*', is_training=True, batch_size=FLAGS.batch_size):
     def input_fn():
-        out_shape = [FLAGS.train_image_size] * 2
+        out_shape = [300, 510]#[FLAGS.train_image_size] * 2
         anchor_creator = anchor_manipulator.AnchorCreator(out_shape,
-                                                    layers_shapes = [(38, 38), (19, 19), (10, 10), (5, 5), (3, 3), (1, 1)],
-                                                    anchor_scales = [(0.1,), (0.2,), (0.375,), (0.55,), (0.725,), (0.9,)],
-                                                    extra_anchor_scales = [(0.1414,), (0.2739,), (0.4541,), (0.6315,), (0.8078,), (0.9836,)],
-                                                    anchor_ratios = [(1., 2., .5), (1., 2., 3., .5, 0.3333), (1., 2., 3., .5, 0.3333), (1., 2., 3., .5, 0.3333), (1., 2., .5), (1., 2., .5)],
+                                                    layers_shapes = [(38, 64), (19, 32), (10, 16), (5, 8), (3, 6), (1, 4)],
+                                                    anchor_scales = [(0.05,), (0.1,), (0.2,), (0.3,), (0.4,), (0.5,)],
+                                                    extra_anchor_scales = [(0.07,), (0.1414,), (0.245,), (0.346,), (0.447,), (0.547,)],
+                                                    anchor_ratios = [(1.,), (1.,), (1.,), (1.,), (1.,), (1.,)],
                                                     layer_steps = [8, 16, 32, 64, 100, 300])
         all_anchors, all_num_anchors_depth, all_num_anchors_spatial = anchor_creator.get_all_anchors()
 
@@ -183,7 +184,7 @@ def input_pipeline(dataset_pattern='train-*', is_training=True, batch_size=FLAGS
                                                             ignore_threshold = FLAGS.neg_threshold,
                                                             prior_scaling=[0.1, 0.1, 0.2, 0.2])
 
-        image_preprocessing_fn = lambda image_, labels_, bboxes_ : ssd_preprocessing.preprocess_image(image_, labels_, bboxes_, out_shape, is_training=is_training, data_format=FLAGS.data_format, output_rgb=False)
+        image_preprocessing_fn = lambda image_, labels_, bboxes_ : ssd_net.preprocess_image(image_, labels_, bboxes_, out_shape, is_training=is_training, data_format=FLAGS.data_format, output_rgb=False)
         anchor_encoder_fn = lambda glabels_, gbboxes_: anchor_encoder_decoder.encode_all_anchors(glabels_, gbboxes_, all_anchors, all_num_anchors_depth, all_num_anchors_spatial)
 
         image, _, shape, loc_targets, cls_targets, match_scores = dataset_common.slim_get_batch(FLAGS.num_classes,
